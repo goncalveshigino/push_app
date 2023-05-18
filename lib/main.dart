@@ -7,6 +7,7 @@ import 'package:push_app/presentation/bloc/notifications/notifications_bloc.dart
 import 'config/router/app_router.dart';
 
 void main() {
+
   runApp(
     MultiBlocProvider(
       providers: [
@@ -15,6 +16,7 @@ void main() {
       child: const MainApp(),
     ),
   );
+  
 }
 
 class MainApp extends StatelessWidget {
