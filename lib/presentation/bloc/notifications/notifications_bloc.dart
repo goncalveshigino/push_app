@@ -20,13 +20,22 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
   FirebaseMessaging messaging = FirebaseMessaging.instance;
+  int pushNumberId = 0;
 
-  NotificationsBloc() : super(const NotificationsState()) {
+  final Future<void> Function()? requestLocalNotificationPermissions;
+  final void Function({
+    required int id,
+    String? title,
+    String? body,
+    String? data,
+  })? showLocalNotification;
+
+  NotificationsBloc({
+    required this.requestLocalNotificationPermissions,
+    this.showLocalNotification,
+  }) : super(const NotificationsState()) {
     on<NotificationStatusChanged>(_notificationStatusChanged);
-
     on<NotificationReceived>(_onPushMessageReceived);
-
-    //TODO 3: criar um listiner _onPushMessageReceived
 
     _initialStatusCheck();
     _onForegroundMessage();
@@ -66,7 +75,6 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
   }
 
   void handleRemoteMessage(RemoteMessage message) {
-
     if (message.notification == null) return;
 
     final notification = PushMessage(
@@ -80,6 +88,14 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
             ? message.notification!.android?.imageUrl
             : message.notification!.apple?.imageUrl);
 
+    if (showLocalNotification != null) {
+      showLocalNotification!(
+        id: ++pushNumberId,
+        body: notification.body,
+        data: notification.messageId,
+        title: notification.title,
+      );
+    }
     add(NotificationReceived(notification));
   }
 
@@ -97,17 +113,19 @@ class NotificationsBloc extends Bloc<NotificationsEvent, NotificationsState> {
       provisional: false,
       sound: true,
     );
-    
+
     //Solicitar permissao aos local notificaions
-    await LocalNotifications.requestPermissionLocalNotifications();
+    if (requestLocalNotificationPermissions != null) {
+      await requestLocalNotificationPermissions!();
+    }
+    //await LocalNotifications.requestPermissionLocalNotifications();
 
     add(NotificationStatusChanged(settings.authorizationStatus));
   }
 
   PushMessage? getMessageById(String pushMessageId) {
-
     final exist = state.notifications
-        .any((element) => element.messageId == pushMessageId); 
+        .any((element) => element.messageId == pushMessageId);
     if (!exist) return null;
 
     return state.notifications
