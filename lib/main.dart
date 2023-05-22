@@ -1,6 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:push_app/config/local_notifications/local_notifications.dart';
 import 'package:push_app/config/theme/app_theme.dart';
 
 import 'package:push_app/presentation/bloc/notifications/notifications_bloc.dart';
@@ -13,6 +14,7 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   await NotificationsBloc.initializeFirebaseNotifications();
+  await LocalNotifications.initializeLocalNotifications();
 
   runApp(
     MultiBlocProvider(
@@ -67,7 +69,8 @@ class _HandleNotificationInterationsState
   void _handleMessage(RemoteMessage message) {
     context.read<NotificationsBloc>().handleRemoteMessage(message);
 
-    final messageId =message.messageId?.replaceAll(':', '').replaceAll('%', '');
+    final messageId =
+        message.messageId?.replaceAll(':', '').replaceAll('%', '');
     appRouter.push('/push-details/$messageId');
 
     // if (message.data['type'] == 'chat') {
